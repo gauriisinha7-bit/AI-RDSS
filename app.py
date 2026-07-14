@@ -3,7 +3,8 @@ import pandas as pd
 import json
 import fitz
 import re
-
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
     page_title="AI-RDSS",
@@ -12,7 +13,15 @@ st.set_page_config(
 
 
 st.title("AI-RDSS Candidate Recommendation System")
+@st.cache_resource
+def load_ai_model():
 
+    return SentenceTransformer(
+        "all-MiniLM-L6-v2"
+    )
+
+
+model = load_ai_model()
 
 # ==========================
 # LOAD KNOWLEDGE BASE
@@ -270,7 +279,51 @@ def calculate_final_score(
 
 
     return round(score,2)
-    
+
+
+def calculate_ai_similarity(
+
+        resume_text,
+
+        jd_text
+
+):
+
+    if jd_text == "":
+
+        return 0
+
+
+    resume_embedding = model.encode(
+
+        resume_text
+
+    )
+
+
+    jd_embedding = model.encode(
+
+        jd_text
+
+    )
+
+
+    similarity = cosine_similarity(
+
+        [resume_embedding],
+
+        [jd_embedding]
+
+    )[0][0]
+
+
+    return round(
+
+        similarity * 100,
+
+        2
+
+    )
 # ==========================
 # RESUME ANALYSIS
 # ==========================
