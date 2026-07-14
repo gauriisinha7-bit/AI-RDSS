@@ -332,3 +332,65 @@ if st.button("Analyze Candidates"):
             "Please upload resumes"
 
         )
+
+
+
+st.subheader("AI-RDSS Decision Explanation")
+
+
+if 'result_df' in locals():
+
+    for index, row in result_df.iterrows():
+
+        st.write("### Candidate:", row["Candidate Name"])
+
+        reasons = []
+
+
+        if row["Skill Score"] >= 70:
+
+            reasons.append(
+                "Strong skill alignment with job requirements"
+            )
+
+        else:
+
+            reasons.append(
+                "Skill gap detected"
+            )
+
+
+        if row["Experience Score"] >= 70:
+
+            reasons.append(
+                "Experience requirement satisfied"
+            )
+
+
+        else:
+
+            reasons.append(
+                "Experience requirement not fully satisfied"
+            )
+
+
+        if row["Education Score"] >= 70:
+
+            reasons.append(
+                "Education requirement satisfied"
+            )
+
+
+        else:
+
+            reasons.append(
+                "Education requirement not matched"
+            )
+
+
+        for r in reasons:
+
+            st.write("✓", r)
+
+
+        st.divider()
