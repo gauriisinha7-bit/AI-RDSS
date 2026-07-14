@@ -1,0 +1,31 @@
+{
+  "Software Engineer": {
+    "weights": {
+      "Skills": 40,
+      "Experience": 25,
+      "Education": 15,
+      "Projects": 10,
+      "Certifications": 5,
+      "Soft_Skills": 5
+    },
+    "required_skills": [
+      "Python",
+      "SQL",
+      "Git",
+      "Data Structures",
+      "Algorithms"
+    ],
+    "preferred_skills": [
+      "Docker",
+      "AWS",
+      "Linux",
+      "REST API"
+    ],
+    "minimum_experience": 2,
+    "education": [
+      "B.Tech",
+      "B.E.",
+      "M.Tech"
+    ]
+  }
+}
