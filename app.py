@@ -161,7 +161,8 @@ def extract_jd_skills(jd_text):
     return found_skills
 
 
-def calculate_skill_score(candidate_skills):
+
+    def calculate_skill_score(candidate_skills):
 
     required = job_data["required_skills"]
 
@@ -173,9 +174,18 @@ def calculate_skill_score(candidate_skills):
 
             matched.append(skill)
 
-    score = (len(matched) / len(required)) * 100
+
+    score = (
+
+        len(matched) / len(required)
+
+    ) * 100
+
 
     return round(score,2), matched
+
+
+
 def extract_jd_skills(jd_text):
 
     skill_list = [
