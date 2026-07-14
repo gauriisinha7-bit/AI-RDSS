@@ -4,22 +4,46 @@ import json
 import fitz
 import re
 
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# ============================================
+# PAGE CONFIGURATION
+# ============================================
 
 st.set_page_config(
     page_title="AI-RDSS",
+    page_icon="🤖",
     layout="wide"
 )
 
+st.title("🤖 AI-RDSS Candidate Recommendation System")
+st.caption("AI Powered Resume Screening & Candidate Recommendation")
 
-st.title("AI-RDSS Candidate Recommendation System")
+
+# ============================================
+# LOAD AI MODEL
+# ============================================
+
+@st.cache_resource
+def load_model():
+    return SentenceTransformer(
+        "all-MiniLM-L6-v2"
+    )
+
+model = load_model()
 
 
-# Load Knowledge Base
+# ============================================
+# LOAD KNOWLEDGE BASE
+# ============================================
 
-with open("recruitment_knowledge_base.json","r") as f:
+with open(
+    "recruitment_knowledge_base.json",
+    "r"
+) as f:
 
     job_database = json.load(f)
-
 
 
 job_role = st.sidebar.selectbox(
@@ -30,27 +54,25 @@ job_role = st.sidebar.selectbox(
 
 )
 
-
 job_data = job_database[job_role]
-
 
 weights = job_data["weights"]
 
 
+# ============================================
+# JOB DESCRIPTION
+# ============================================
 
-# Upload Job Description
+jd_file = st.sidebar.file_uploader(
 
-job_description_file = st.sidebar.file_uploader(
-
-    "Upload Job Description PDF",
+    "Upload Job Description",
 
     type=["pdf"]
 
 )
 
 
-
-def extract_job_description(file):
+def extract_pdf(file):
 
     text = ""
 
@@ -62,28 +84,92 @@ def extract_job_description(file):
 
     )
 
-
     for page in pdf:
 
         text += page.get_text()
 
-
     return text
 
 
+if jd_file:
 
-if job_description_file:
+    jd_text = extract_pdf(jd_file)
 
-    jd_text = extract_job_description(job_description_file)
+    st.sidebar.success(
+
+        "Job Description Loaded"
+
+    )
 
 else:
 
     jd_text = ""
 
-# ==========================================================
-# Resume Extraction
-# ==========================================================
 
+# ============================================
+# MASTER SKILL DATABASE
+# ============================================
+
+MASTER_SKILLS = [
+
+    "Python",
+
+    "Java",
+
+    "C++",
+
+    "JavaScript",
+
+    "SQL",
+
+    "Git",
+
+    "Linux",
+
+    "AWS",
+
+    "Docker",
+
+    "REST API",
+
+    "React",
+
+    "Node.js",
+
+    "Machine Learning",
+
+    "Deep Learning",
+
+    "TensorFlow",
+
+    "PyTorch",
+
+    "Power BI",
+
+    "Tableau",
+
+    "Pandas",
+
+    "NumPy",
+
+    "Data Structures",
+
+    "Algorithms",
+
+    "Flask",
+
+    "Django",
+
+    "MongoDB",
+
+    "MySQL"
+
+]
+
+
+# ============================================
+# RESUME EXTRACTION
+# ============================================
 
 def extract_resume_text(file):
 
@@ -97,411 +183,76 @@ def extract_resume_text(file):
 
     )
 
-
     for page in pdf:
 
         text += page.get_text()
 
-
     return text
 
 
-
-# ==========================================================
-# Skill Extraction
-# ==========================================================
-
+# ============================================
+# SKILL EXTRACTION
+# ============================================
 
 def extract_skills(text):
 
-    skills = [
-
-        "Python",
-        "SQL",
-        "Git",
-        "Data Structures",
-        "Algorithms",
-        "Docker",
-        "AWS",
-        "Linux",
-        "REST API"
-
-    ]
-
+    text = text.lower()
 
     found = []
 
-
-    text = text.lower()
-
-
-    for skill in skills:
+    for skill in MASTER_SKILLS:
 
         if skill.lower() in text:
 
             found.append(skill)
 
+    return sorted(
 
-    return found
-
-
-
-# ==========================================================
-# Score Calculation
-# ==========================================================
-
-
-def calculate_skill_score(candidate_skills):
-
-    required = job_data["required_skills"]
-
-
-    matched = []
-
-
-    for skill in required:
-
-        if skill in candidate_skills:
-
-            matched.append(skill)
-
-
-
-    score = (
-
-        len(matched) / len(required)
-
-    ) * 100
-
-
-
-    return round(score,2), matched
-
-
-
-def calculate_experience_score(text):
-
-    matches = re.findall(
-
-        r'(\d+)\+?\s*(?:years|year|yrs)',
-
-        text.lower()
+        list(set(found))
 
     )
 
 
-    if matches:
+# ============================================
+# AI SEMANTIC MATCHING
+# ============================================
 
-        years = max(
+def calculate_ai_similarity(
 
-            [int(x) for x in matches]
+    resume_text,
 
-        )
-
-    else:
-
-        years = 0
-
-
-
-    required_years = job_data["minimum_experience"]
-
-
-    if years >= required_years:
-
-        return 100
-
-    elif years > 0:
-
-        return 50
-
-    else:
-
-        return 0
-
-
-
-def calculate_education_score(text):
-
-    text = text.lower()
-
-
-    for edu in job_data["education"]:
-
-        if edu.lower() in text:
-
-            return 100
-
-
-    if "bachelor" in text:
-
-        return 100
-
-
-    return 0
-
-# ==========================================================
-# Final Score
-# ==========================================================
-
-
-def calculate_final_score(
-
-    skill,
-
-    experience,
-
-    education
+    jd_text
 
 ):
 
-    final = (
+    if jd_text == "":
 
-        skill * weights["Skills"]/100
+        return 0
 
-        +
+    resume_embedding = model.encode(
 
-        experience * weights["Experience"]/100
-
-        +
-
-        education * weights["Education"]/100
+        resume_text
 
     )
 
+    jd_embedding = model.encode(
 
-    return round(final,2)
-
-
-
-# ==========================================================
-# Resume Upload and Analysis
-# ==========================================================
-
-
-uploaded_resumes = st.file_uploader(
-
-    "Upload Candidate Resumes",
-
-    type=["pdf"],
-
-    accept_multiple_files=True
-
-)
-
-
-
-if st.button("Analyze Candidates"):
-
-
-    if uploaded_resumes:
-
-
-        results = []
-
-
-        for resume in uploaded_resumes:
-
-
-            resume_text = extract_resume_text(resume)
-
-
-            candidate_name = resume.name.replace(
-
-                ".pdf",
-
-                ""
-
-            )
-
-
-            skills = extract_skills(resume_text)
-
-
-            skill_score, matched = calculate_skill_score(
-
-                skills
-
-            )
-
-
-            experience_score = calculate_experience_score(
-
-                resume_text
-
-            )
-
-
-            education_score = calculate_education_score(
-
-                resume_text
-
-            )
-
-
-            final_score = calculate_final_score(
-
-                skill_score,
-
-                experience_score,
-
-                education_score
-
-            )
-
-
-            results.append({
-
-                "Candidate Name": candidate_name,
-
-                "Skill Score": skill_score,
-
-                "Experience Score": experience_score,
-
-                "Education Score": education_score,
-
-                "Final Score": final_score,
-
-                "Matched Skills": ", ".join(matched)
-
-            })
-
-
-
-        result_df = pd.DataFrame(results)
-
-
-        result_df = result_df.sort_values(
-
-            by="Final Score",
-
-            ascending=False
-
-        )
-
-
-        st.subheader(
-
-            "AI-RDSS Candidate Ranking"
-
-        )
-
-
-        st.dataframe(
-
-            result_df,
-
-            use_container_width=True
-
-        )
-
-
-
-    else:
-
-
-        st.warning(
-
-            "Please upload resumes"
-
-        )
-
-# ==========================================================
-# Decision Explanation + Download + Graph
-# ==========================================================
-
-
-if 'result_df' in locals():
-
-
-    st.subheader("Final Recruitment Decision")
-
-
-    decision_df = result_df.copy()
-
-
-
-    def get_decision(score):
-
-        if score >= 70:
-
-            return "Recommended"
-
-        elif score >= 50:
-
-            return "Consider"
-
-        else:
-
-            return "Not Recommended"
-
-
-
-    decision_df["Decision"] = decision_df["Final Score"].apply(
-
-        get_decision
+        jd_text
 
     )
 
+    similarity = cosine_similarity(
 
-    st.dataframe(
+        [resume_embedding],
 
-        decision_df[
+        [jd_embedding]
 
-            [
+    )[0][0]
 
-                "Candidate Name",
+    return round(
 
-                "Final Score",
+        similarity * 100,
 
-                "Decision"
+        2
 
-            ]
-
-        ],
-
-        use_container_width=True
-
-    )
-
-
-    st.subheader("AI-RDSS Feature Contribution Explanation")
-
-if 'result_df' in locals():
-
-    selected_candidate = result_df.iloc[0]
-
-    contribution_df = pd.DataFrame(
-        {
-            "Feature": [
-                "Skills",
-                "Experience",
-                "Education"
-            ],
-
-            "Contribution": [
-                selected_candidate["Skill Score"] * weights["Skills"] / 100,
-                selected_candidate["Experience Score"] * weights["Experience"] / 100,
-                selected_candidate["Education Score"] * weights["Education"] / 100
-            ]
-        }
-    )
-
-    st.dataframe(
-        contribution_df,
-        use_container_width=True
-    )
-
-
-st.subheader("Download Recruitment Report")
-
-if 'result_df' in locals():
-
-    csv_file = result_df.to_csv(index=False)
-
-    st.download_button(
-        label="Download CSV Report",
-        data=csv_file,
-        file_name="AI_RDSS_Report.csv",
-        mime="text/csv"
     )
