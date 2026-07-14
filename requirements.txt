@@ -6,4 +6,4 @@ sentence-transformers
 shap
 python-docx
 PyMuPDF
-plotly>=5.20.0
+plotly
