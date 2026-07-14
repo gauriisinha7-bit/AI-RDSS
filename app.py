@@ -467,12 +467,10 @@ if 'result_df' in locals():
 
 
 
-    st.subheader(
+    st.subheader("AI-RDSS Feature Contribution Explanation")
 
-        "AI-RDSS Feature Contribution Explanation"
 
-    )
-
+if 'result_df' in locals():
 
     selected_candidate = result_df.iloc[0]
 
@@ -499,61 +497,40 @@ if 'result_df' in locals():
     ]
 
 
-    fig, ax = plt.subplots(
+    contribution_df = pd.DataFrame(
 
-        figsize=(8,4)
+        {
 
-    )
+            "Feature": features,
 
+            "Contribution": contributions
 
-    ax.bar(
-
-        features,
-
-        contributions
+        }
 
     )
 
 
-    ax.set_title(
+    st.dataframe(
 
-        "Decision Contribution - "
+        contribution_df,
 
-        + selected_candidate["Candidate Name"]
-
-    )
-
-
-    st.pyplot(fig)
-
-
-
-    st.subheader(
-
-        "Download Report"
+        use_container_width=True
 
     )
 
 
-    csv = result_df.to_csv(
 
-        index=False
-
-    )
+    csv = result_df.to_csv(index=False)
 
 
     st.download_button(
 
-        "Download CSV",
+        label="Download CSV Report",
 
-        csv,
+        data=csv,
 
-        "AI_RDSS_Report.csv",
+        file_name="AI_RDSS_Report.csv",
 
-        "text/csv"
+        mime="text/csv"
 
     )
-
-
-
-    
