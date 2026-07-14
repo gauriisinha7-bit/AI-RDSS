@@ -473,7 +473,14 @@ if 'result_df' in locals():
         contribution_df,
         use_container_width=True
     )
+st.subheader("Feature Contribution Graph")
 
+
+st.bar_chart(
+
+    contribution_df.set_index("Feature")
+
+)
 
 st.subheader("Download Recruitment Report")
 
