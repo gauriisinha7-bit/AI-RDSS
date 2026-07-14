@@ -4,6 +4,10 @@ import json
 import fitz
 import re
 
+import numpy as np
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
