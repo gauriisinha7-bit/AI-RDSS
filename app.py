@@ -100,10 +100,43 @@ def extract_resume_text(file):
 
 
 
-# Basic skill extraction
 
 def extract_skills(text):
 
+    def extract_jd_skills(jd_text):
+
+    skill_list = [
+
+        "Python",
+        "SQL",
+        "Git",
+        "Data Structures",
+        "Algorithms",
+        "Docker",
+        "AWS",
+        "Linux",
+        "REST API",
+        "Java",
+        "C++",
+        "JavaScript"
+
+    ]
+
+
+    found_skills = []
+
+
+    jd_text = jd_text.lower()
+
+
+    for skill in skill_list:
+
+        if skill.lower() in jd_text:
+
+            found_skills.append(skill)
+
+
+    return found_skills
     skills = [
 
         "Python",
@@ -136,8 +169,15 @@ def extract_skills(text):
 
 def calculate_skill_score(candidate_skills):
 
-    required = job_data["required_skills"]
+required = (
 
+    extract_jd_skills(jd_text)
+
+    if jd_text
+
+    else job_data["required_skills"]
+
+)
 
     matched = []
 
