@@ -466,8 +466,7 @@ if 'result_df' in locals():
     )
 
 
-
-  st.subheader("AI-RDSS Feature Contribution Explanation")
+    st.subheader("AI-RDSS Feature Contribution Explanation")
 
 if 'result_df' in locals():
 
