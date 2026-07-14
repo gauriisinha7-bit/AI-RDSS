@@ -399,7 +399,7 @@ ai_score = calculate_ai_similarity(
     jd_text
 
 )
-            final_score = calculate_final_score(
+        final_score = calculate_final_score(
 
                 skill_score,
 
