@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import fitz
 import re
+import matplotlib.pyplot as plt
 from pathlib import Path
 
 st.set_page_config(
@@ -98,12 +99,37 @@ def extract_resume_text(file):
 
     return text
 
-
-
-
 def extract_skills(text):
 
-    def extract_jd_skills(jd_text):
+    skills = [
+
+        "Python",
+        "SQL",
+        "Git",
+        "Data Structures",
+        "Algorithms",
+        "Docker",
+        "AWS",
+        "Linux",
+        "REST API"
+
+    ]
+
+    found = []
+
+    text = text.lower()
+
+    for skill in skills:
+
+        if skill.lower() in text:
+
+            found.append(skill)
+
+    return found
+
+
+
+def extract_jd_skills(jd_text):
 
     skill_list = [
 
@@ -122,12 +148,9 @@ def extract_skills(text):
 
     ]
 
-
     found_skills = []
 
-
     jd_text = jd_text.lower()
-
 
     for skill in skill_list:
 
@@ -135,42 +158,26 @@ def extract_skills(text):
 
             found_skills.append(skill)
 
-
     return found_skills
-    skills = [
 
-        "Python",
-        "SQL",
-        "Git",
-        "Data Structures",
-        "Algorithms",
-        "Docker",
-        "AWS",
-        "Linux",
-        "REST API"
-
-    ]
-
-
-    found = []
-
-
-    text = text.lower()
-
-
-    for skill in skills:
-
-        if skill.lower() in text:
-
-            found.append(skill)
-
-
-    return found
 
 def calculate_skill_score(candidate_skills):
 
+def calculate_skill_score(candidate_skills):
 
+    required = job_data["required_skills"]
 
+    matched = []
+
+    for skill in required:
+
+        if skill in candidate_skills:
+
+            matched.append(skill)
+
+    score = (len(matched) / len(required)) * 100
+
+    return round(score,2), matched
 def extract_jd_skills(jd_text):
 
     skill_list = [
