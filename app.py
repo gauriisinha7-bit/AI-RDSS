@@ -394,3 +394,56 @@ if 'result_df' in locals():
 
 
         st.divider()
+
+
+
+st.subheader("Final Recruitment Decision")
+
+
+if 'result_df' in locals():
+
+    decision_df = result_df.copy()
+
+
+    def get_decision(score):
+
+        if score >= 70:
+
+            return "Recommended"
+
+        elif score >= 50:
+
+            return "Consider"
+
+        else:
+
+            return "Not Recommended"
+
+
+
+    decision_df["Decision"] = decision_df["Final Score"].apply(
+
+        get_decision
+
+    )
+
+
+    st.dataframe(
+
+        decision_df[
+
+            [
+
+                "Candidate Name",
+
+                "Final Score",
+
+                "Decision"
+
+            ]
+
+        ],
+
+        use_container_width=True
+
+    )
