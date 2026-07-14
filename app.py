@@ -465,7 +465,25 @@ st.subheader("AI-RDSS Feature Contribution Explanation")
 
 if 'result_df' in locals():
 
-    selected_candidate = result_df.iloc[0]
+    st.subheader("AI-RDSS Feature Contribution Explanation")
+
+
+if 'result_df' in locals():
+
+    selected_name = st.selectbox(
+
+        "Select Candidate for Explanation",
+
+        result_df["Candidate Name"].tolist()
+
+    )
+
+
+    selected_candidate = result_df[
+
+        result_df["Candidate Name"] == selected_name
+
+    ].iloc[0]
 
 
     contribution_df = pd.DataFrame(
@@ -497,8 +515,6 @@ if 'result_df' in locals():
     )
 
 
-    st.write("Feature Contribution Values")
-
     st.dataframe(
 
         contribution_df,
@@ -508,33 +524,8 @@ if 'result_df' in locals():
     )
 
 
-    st.write("Feature Contribution Graph")
-
-
     st.bar_chart(
 
         contribution_df.set_index("Feature")
-
-    )
-
-
-
-st.subheader("Download Recruitment Report")
-
-
-if 'result_df' in locals():
-
-    csv_file = result_df.to_csv(index=False)
-
-
-    st.download_button(
-
-        label="Download CSV Report",
-
-        data=csv_file,
-
-        file_name="AI_RDSS_Report.csv",
-
-        mime="text/csv"
 
     )
