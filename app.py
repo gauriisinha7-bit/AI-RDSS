@@ -102,9 +102,6 @@ def extract_resume_text(file):
 
 
 
-# ==========================================================
-# Skill Extraction
-# ==========================================================
 
 
 def extract_skills(text):
@@ -141,9 +138,6 @@ def extract_skills(text):
 
 
 
-# ==========================================================
-# Score Calculation
-# ==========================================================
 
 
 def calculate_skill_score(candidate_skills):
@@ -236,4 +230,308 @@ def calculate_education_score(text):
     return 0
    
 
+
+
+def calculate_final_score(
+
+    skill,
+
+    experience,
+
+    education
+
+):
+
+    final = (
+
+        skill * weights["Skills"]/100
+
+        +
+
+        experience * weights["Experience"]/100
+
+        +
+
+        education * weights["Education"]/100
+
+    )
+
+
+    return round(final,2)
+
+
+
+
+
+
+uploaded_resumes = st.file_uploader(
+
+    "Upload Candidate Resumes",
+
+    type=["pdf"],
+
+    accept_multiple_files=True
+
+)
+
+
+
+if st.button("Analyze Candidates"):
+
+
+    if uploaded_resumes:
+
+
+        results = []
+
+
+        for resume in uploaded_resumes:
+
+
+            resume_text = extract_resume_text(resume)
+
+
+            candidate_name = resume.name.replace(
+
+                ".pdf",
+
+                ""
+
+            )
+
+
+            skills = extract_skills(resume_text)
+
+
+            skill_score, matched = calculate_skill_score(
+
+                skills
+
+            )
+
+
+            experience_score = calculate_experience_score(
+
+                resume_text
+
+            )
+
+
+            education_score = calculate_education_score(
+
+                resume_text
+
+            )
+
+
+            final_score = calculate_final_score(
+
+                skill_score,
+
+                experience_score,
+
+                education_score
+
+            )
+
+
+            results.append({
+
+                "Candidate Name": candidate_name,
+
+                "Skill Score": skill_score,
+
+                "Experience Score": experience_score,
+
+                "Education Score": education_score,
+
+                "Final Score": final_score,
+
+                "Matched Skills": ", ".join(matched)
+
+            })
+
+
+
+        result_df = pd.DataFrame(results)
+
+
+        result_df = result_df.sort_values(
+
+            by="Final Score",
+
+            ascending=False
+
+        )
+
+
+        st.subheader(
+
+            "AI-RDSS Candidate Ranking"
+
+        )
+
+
+        st.dataframe(
+
+            result_df,
+
+            use_container_width=True
+
+        )
+
+
+
+    else:
+
+
+        st.warning(
+
+            "Please upload resumes"
+
+        )
                
+
+
+
+if 'result_df' in locals():
+
+
+    st.subheader("Final Recruitment Decision")
+
+
+    decision_df = result_df.copy()
+
+
+
+    def get_decision(score):
+
+        if score >= 70:
+
+            return "Recommended"
+
+        elif score >= 50:
+
+            return "Consider"
+
+        else:
+
+            return "Not Recommended"
+
+
+
+    decision_df["Decision"] = decision_df["Final Score"].apply(
+
+        get_decision
+
+    )
+
+
+    st.dataframe(
+
+        decision_df[
+
+            [
+
+                "Candidate Name",
+
+                "Final Score",
+
+                "Decision"
+
+            ]
+
+        ],
+
+        use_container_width=True
+
+    )
+
+
+
+    st.subheader(
+
+        "AI-RDSS Feature Contribution Explanation"
+
+    )
+
+
+    selected_candidate = result_df.iloc[0]
+
+
+    features = [
+
+        "Skills",
+
+        "Experience",
+
+        "Education"
+
+    ]
+
+
+    contributions = [
+
+        selected_candidate["Skill Score"] * weights["Skills"]/100,
+
+        selected_candidate["Experience Score"] * weights["Experience"]/100,
+
+        selected_candidate["Education Score"] * weights["Education"]/100
+
+    ]
+
+
+    fig, ax = plt.subplots(
+
+        figsize=(8,4)
+
+    )
+
+
+    ax.bar(
+
+        features,
+
+        contributions
+
+    )
+
+
+    ax.set_title(
+
+        "Decision Contribution - "
+
+        + selected_candidate["Candidate Name"]
+
+    )
+
+
+    st.pyplot(fig)
+
+
+
+    st.subheader(
+
+        "Download Report"
+
+    )
+
+
+    csv = result_df.to_csv(
+
+        index=False
+
+    )
+
+
+    st.download_button(
+
+        "Download CSV",
+
+        csv,
+
+        "AI_RDSS_Report.csv",
+
+        "text/csv"
+
+    )
