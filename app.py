@@ -583,3 +583,205 @@ if "result_df" in st.session_state:
         candidate["Final Score"]
 
     )
+    # ==========================
+    # SKILL ANALYSIS
+    # ==========================
+
+
+    st.subheader(
+
+        "Matched Skills"
+
+    )
+
+
+    for skill in candidate["Matched Skills"]:
+
+        st.success(
+
+            "✓ " + skill
+
+        )
+
+
+
+    st.subheader(
+
+        "Missing Skills"
+
+    )
+
+
+    for skill in candidate["Missing Skills"]:
+
+        st.error(
+
+            "✗ " + skill
+
+        )
+
+
+
+    # ==========================
+    # SHAP STYLE EXPLANATION
+    # ==========================
+
+
+    st.subheader(
+
+        "AI Decision Explanation"
+
+    )
+
+
+    contribution_df = pd.DataFrame(
+
+        {
+
+            "Feature": [
+
+                "Skills",
+
+                "Experience",
+
+                "Education"
+
+            ],
+
+
+            "Contribution": [
+
+                candidate["Skill Score"] * weights["Skills"] / 100,
+
+                candidate["Experience Score"] * weights["Experience"] / 100,
+
+                candidate["Education Score"] * weights["Education"] / 100
+
+            ]
+
+        }
+
+    )
+
+
+
+    st.dataframe(
+
+        contribution_df,
+
+        use_container_width=True
+
+    )
+
+
+    st.bar_chart(
+
+        contribution_df.set_index(
+
+            "Feature"
+
+        )
+
+    )
+
+
+
+    # ==========================
+    # CANDIDATE COMPARISON
+    # ==========================
+
+
+    if len(result_df) > 1:
+
+
+        st.subheader(
+
+            "Candidate Comparison"
+
+        )
+
+
+        comparison = result_df[
+
+            [
+
+                "Candidate Name",
+
+                "Skill Score",
+
+                "Experience Score",
+
+                "Education Score",
+
+                "Final Score"
+
+            ]
+
+        ]
+
+
+        st.dataframe(
+
+            comparison,
+
+            use_container_width=True
+
+        )
+
+
+        st.bar_chart(
+
+            comparison.set_index(
+
+                "Candidate Name"
+
+            )
+
+        )
+
+
+
+    # ==========================
+    # DOWNLOAD REPORT
+    # ==========================
+
+
+    st.subheader(
+
+        "Download Recruitment Report"
+
+    )
+
+
+    report_df = result_df.copy()
+
+
+    report_df["Decision"] = report_df[
+
+        "Final Score"
+
+    ].apply(
+
+        get_decision
+
+    )
+
+
+    csv_file = report_df.to_csv(
+
+        index=False
+
+    )
+
+
+    st.download_button(
+
+        label="Download CSV Report",
+
+        data=csv_file,
+
+        file_name="AI_RDSS_Candidate_Report.csv",
+
+        mime="text/csv"
+
+    )
