@@ -468,17 +468,39 @@ if 'result_df' in locals():
 
     ]
 
+if 'result_df' in locals():
+
+    selected_candidate = result_df.iloc[0]
+
+
+    features = [
+
+        "Skills",
+        "Experience",
+        "Education"
+
+    ]
+
 
     contributions = [
 
         selected_candidate["Skill Score"] * weights["Skills"]/100,
-
         selected_candidate["Experience Score"] * weights["Experience"]/100,
-
         selected_candidate["Education Score"] * weights["Education"]/100
 
     ]
 
+
+    contribution_df = pd.DataFrame(
+
+        {
+            "Feature": features,
+            "Contribution": contributions
+        }
+
+    )
+
+  
 st.write(
     pd.DataFrame(
         {
