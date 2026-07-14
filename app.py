@@ -255,31 +255,35 @@ def calculate_education_score(text):
 
 def calculate_final_score(
 
-        skill,
+    skill,
 
-        experience,
+    experience,
 
-        education
+    education,
+
+    ai_score
 
 ):
 
     score = (
 
-        skill * weights["Skills"]/100
+        skill * 0.30
 
         +
 
-        experience * weights["Experience"]/100
+        experience * 0.20
 
         +
 
-        education * weights["Education"]/100
+        education * 0.20
+
+        +
+
+        ai_score * 0.30
 
     )
 
-
-    return round(score,2)
-
+    return round(score, 2)
 
 def calculate_ai_similarity(
 
