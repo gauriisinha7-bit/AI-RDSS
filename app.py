@@ -3,31 +3,43 @@ import pandas as pd
 import json
 import fitz
 import re
+
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+
+# ======================================================
+# PAGE CONFIG
+# ======================================================
+
 st.set_page_config(
-    page_title="AI-RDSS",
+    page_title="AI-RDSS Candidate Recommendation System",
+    page_icon="🤖",
     layout="wide"
 )
 
 
-st.title("AI-RDSS Candidate Recommendation System")
+st.title("🤖 AI-RDSS Candidate Recommendation System")
+st.caption("AI Powered Resume Screening and Candidate Recommendation")
+
+
+# ======================================================
+# LOAD AI MODEL
+# ======================================================
+
 @st.cache_resource
-def load_ai_model():
-
-    return SentenceTransformer(
-        "all-MiniLM-L6-v2"
-    )
+def load_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
 
-model = load_ai_model()
+model = load_model()
 
-# ==========================
+
+# ======================================================
 # LOAD KNOWLEDGE BASE
-# ==========================
+# ======================================================
 
-with open("recruitment_knowledge_base.json", "r") as f:
+with open("recruitment_knowledge_base.json","r") as f:
     job_database = json.load(f)
 
 
@@ -36,18 +48,17 @@ job_role = st.sidebar.selectbox(
     list(job_database.keys())
 )
 
-
 job_data = job_database[job_role]
 
 weights = job_data["weights"]
 
 
-# ==========================
+# ======================================================
 # JOB DESCRIPTION
-# ==========================
+# ======================================================
 
 job_description_file = st.sidebar.file_uploader(
-    "Upload Job Description PDF",
+    "Upload Job Description",
     type=["pdf"]
 )
 
@@ -67,24 +78,20 @@ def extract_pdf_text(file):
     return text
 
 
-
 if job_description_file:
 
     jd_text = extract_pdf_text(job_description_file)
 
-    st.sidebar.success(
-        "Job Description Loaded"
-    )
+    st.sidebar.success("Job Description Loaded")
 
 else:
 
     jd_text = ""
 
 
-
-# ==========================
-# RESUME EXTRACTION
-# ==========================
+# ======================================================
+# RESUME TEXT EXTRACTION
+# ======================================================
 
 def extract_resume_text(file):
 
@@ -95,185 +102,66 @@ def extract_resume_text(file):
         filetype="pdf"
     )
 
-
     for page in pdf:
 
         text += page.get_text()
 
-
     return text
 
 
-
-# ==========================
+# ======================================================
 # SKILL EXTRACTION
-# ==========================
+# ======================================================
+
+MASTER_SKILL_LIST = [
+
+    "Python",
+    "SQL",
+    "Git",
+    "Docker",
+    "AWS",
+    "Linux",
+    "REST API",
+    "Java",
+    "C++",
+    "JavaScript",
+    "Machine Learning",
+    "Deep Learning",
+    "TensorFlow",
+    "PyTorch",
+    "Pandas",
+    "NumPy",
+    "Power BI",
+    "Tableau",
+    "Excel",
+    "Data Structures",
+    "Algorithms",
+    "Flask",
+    "Django",
+    "React",
+    "Node.js"
+
+]
+
 
 def extract_skills(text):
 
-    skill_list = [
-
-        "Python",
-        "SQL",
-        "Git",
-        "Data Structures",
-        "Algorithms",
-        "Docker",
-        "AWS",
-        "Linux",
-        "REST API",
-        "Java",
-        "C++",
-        "JavaScript"
-
-    ]
-
-
     found = []
-
 
     text = text.lower()
 
-
-    for skill in skill_list:
+    for skill in MASTER_SKILL_LIST:
 
         if skill.lower() in text:
 
             found.append(skill)
 
+    return list(set(found))
 
-    return found
 
-
-
-# ==========================
-# SCORE FUNCTIONS
-# ==========================
-
-def calculate_skill_score(candidate_skills):
-
-    required = job_data["required_skills"]
-
-    matched = []
-
-    missing = []
-
-    for skill in required:
-
-        if skill in candidate_skills:
-
-            matched.append(skill)
-
-        else:
-
-            missing.append(skill)
-
-    if len(required) == 0:
-
-        score = 0
-
-    else:
-
-        score = (len(matched) / len(required)) * 100
-
-    return round(score, 2), matched, missing
-
-
-
-def calculate_experience_score(text):
-
-    matches = re.findall(
-
-        r'(\d+)\+?\s*(?:years|year|yrs)',
-
-        text.lower()
-
-    )
-
-
-    if matches:
-
-        years = max(
-
-            [int(x) for x in matches]
-
-        )
-
-    else:
-
-        years = 0
-
-
-
-    required_years = job_data["minimum_experience"]
-
-
-    if years >= required_years:
-
-        return 100
-
-    elif years > 0:
-
-        return 50
-
-    else:
-
-        return 0
-
-
-
-def calculate_education_score(text):
-
-    text = text.lower()
-
-
-    for edu in job_data["education"]:
-
-        if edu.lower() in text:
-
-            return 100
-
-
-    if "bachelor" in text:
-
-        return 100
-
-
-    return 0
-
-
-
-def calculate_final_score(
-
-    skill,
-
-    experience,
-
-    education,
-
-    ai_score
-
-):
-
-    score = (
-
-        skill * 0.30
-
-        +
-
-        experience * 0.20
-
-        +
-
-        education * 0.20
-
-        +
-
-        ai_score * 0.30
-
-    )
-
-    return round(score, 2)
+# ======================================================
+# AI SEMANTIC SIMILARITY
+# ======================================================
 
 def calculate_ai_similarity(
 
@@ -287,20 +175,9 @@ def calculate_ai_similarity(
 
         return 0
 
+    resume_embedding = model.encode(resume_text)
 
-    resume_embedding = model.encode(
-
-        resume_text
-
-    )
-
-
-    jd_embedding = model.encode(
-
-        jd_text
-
-    )
-
+    jd_embedding = model.encode(jd_text)
 
     similarity = cosine_similarity(
 
@@ -310,19 +187,1012 @@ def calculate_ai_similarity(
 
     )[0][0]
 
+    return round(similarity * 100,2)
+    ###############################################################
+# RESUME ANALYSIS ENGINE
+###############################################################
 
-    return round(
+def analyze_resume(
+    resume_text,
+    jd_text,
+    knowledge_base,
+    role_weights
+):
 
-        similarity * 100,
+    ###########################################################
+    # Extract Skills
+    ###########################################################
+
+    resume_skills = extract_skills(
+        resume_text,
+        knowledge_base
+    )
+
+    jd_skills = extract_skills(
+        jd_text,
+        knowledge_base
+    )
+
+    matched_skills = sorted(
+        list(
+            set(resume_skills).intersection(
+                set(jd_skills)
+            )
+        )
+    )
+
+    missing_skills = sorted(
+        list(
+            set(jd_skills) -
+            set(resume_skills)
+        )
+    )
+
+    ###########################################################
+    # Skill Score
+    ###########################################################
+
+    if len(jd_skills) == 0:
+
+        skill_score = 0
+
+    else:
+
+        skill_score = round(
+
+            (
+                len(matched_skills)
+                /
+                len(jd_skills)
+            )
+            * 100,
+
+            2
+
+        )
+
+    ###########################################################
+    # Experience Score
+    ###########################################################
+
+    resume_experience = extract_experience(
+        resume_text
+    )
+
+    jd_experience = extract_experience(
+        jd_text
+    )
+
+    if jd_experience == 0:
+
+        experience_score = 100
+
+    else:
+
+        experience_score = min(
+
+            round(
+
+                (
+                    resume_experience
+                    /
+                    jd_experience
+                )
+                * 100,
+
+                2
+
+            ),
+
+            100
+
+        )
+
+    ###########################################################
+    # Education Score
+    ###########################################################
+
+    education_score = compare_education(
+
+        resume_text,
+
+        jd_text
+
+    )
+
+    ###########################################################
+    # Project Score
+    ###########################################################
+
+    project_keywords = [
+
+        "project",
+        "developed",
+        "implemented",
+        "built",
+        "designed",
+        "system",
+        "application",
+        "dashboard",
+        "web application",
+        "machine learning",
+        "deep learning",
+        "ai",
+        "nlp",
+        "research"
+
+    ]
+
+    resume_lower = resume_text.lower()
+
+    project_count = 0
+
+    for keyword in project_keywords:
+
+        if keyword in resume_lower:
+
+            project_count += 1
+
+    project_score = min(
+
+        project_count * 10,
+
+        100
+
+    )
+
+    ###########################################################
+    # Certification Score
+    ###########################################################
+
+    certification_keywords = [
+
+        "certification",
+        "certificate",
+        "coursera",
+        "udemy",
+        "nptel",
+        "edx",
+        "aws",
+        "azure",
+        "google",
+        "oracle",
+        "ibm",
+        "microsoft"
+
+    ]
+
+    certification_count = 0
+
+    for keyword in certification_keywords:
+
+        if keyword in resume_lower:
+
+            certification_count += 1
+
+    certification_score = min(
+
+        certification_count * 15,
+
+        100
+
+    )
+
+    ###########################################################
+    # Soft Skills Score
+    ###########################################################
+
+    soft_skill_keywords = [
+
+        "communication",
+        "leadership",
+        "teamwork",
+        "problem solving",
+        "critical thinking",
+        "adaptability",
+        "decision making",
+        "time management",
+        "collaboration",
+        "creativity",
+        "presentation",
+        "analytical"
+
+    ]
+
+    soft_skill_count = 0
+
+    for keyword in soft_skill_keywords:
+
+        if keyword in resume_lower:
+
+            soft_skill_count += 1
+
+    soft_skill_score = min(
+
+        soft_skill_count * 8,
+
+        100
+
+    )
+
+    ###########################################################
+    # Semantic Similarity
+    ###########################################################
+
+    semantic_score = calculate_semantic_similarity(
+
+        resume_text,
+
+        jd_text
+
+    )
+
+    ###########################################################
+    # Final AI Weighted Score
+    ###########################################################
+
+    final_score = (
+
+        semantic_score *
+        role_weights["semantic"]
+
+        +
+
+        skill_score *
+        role_weights["skills"]
+
+        +
+
+        experience_score *
+        role_weights["experience"]
+
+        +
+
+        education_score *
+        role_weights["education"]
+
+        +
+
+        project_score *
+        role_weights["projects"]
+
+        +
+
+        certification_score *
+        role_weights["certifications"]
+
+        +
+
+        soft_skill_score *
+        role_weights["soft_skills"]
+
+    )
+
+    final_score = round(
+
+        final_score,
 
         2
 
     )
-# ==========================
-# RESUME ANALYSIS
-# ==========================
 
-uploaded_resumes = st.file_uploader(
+    ###########################################################
+    # Return Results
+    ###########################################################
+
+    return {
+
+        "Semantic Score": semantic_score,
+
+        "Skill Score": skill_score,
+
+        "Experience Score": experience_score,
+
+        "Education Score": education_score,
+
+        "Project Score": project_score,
+
+        "Certification Score": certification_score,
+
+        "Soft Skill Score": soft_skill_score,
+
+        "Matched Skills": matched_skills,
+
+        "Missing Skills": missing_skills,
+
+        "Resume Experience": resume_experience,
+
+        "Required Experience": jd_experience,
+
+        "Final Score": final_score
+
+    }
+
+###############################################################
+# DETAILED RESUME ANALYSIS ENGINE
+###############################################################
+
+def generate_resume_analysis(
+    resume_text,
+    jd_text,
+    knowledge_base,
+    role_weights
+):
+
+    results = analyze_resume(
+
+        resume_text,
+        jd_text,
+        knowledge_base,
+        role_weights
+
+    )
+
+    ###########################################################
+    # Candidate Strengths
+    ###########################################################
+
+    strengths = []
+
+    if results["Skill Score"] >= 80:
+        strengths.append(
+            "Excellent technical skill alignment."
+        )
+
+    if results["Experience Score"] >= 80:
+        strengths.append(
+            "Experience meets or exceeds job requirement."
+        )
+
+    if results["Education Score"] >= 80:
+        strengths.append(
+            "Educational qualification is highly suitable."
+        )
+
+    if results["Project Score"] >= 70:
+        strengths.append(
+            "Relevant industry/research projects identified."
+        )
+
+    if results["Certification Score"] >= 70:
+        strengths.append(
+            "Relevant professional certifications available."
+        )
+
+    if results["Soft Skill Score"] >= 70:
+        strengths.append(
+            "Strong evidence of communication and teamwork."
+        )
+
+    ###########################################################
+    # Weaknesses
+    ###########################################################
+
+    weaknesses = []
+
+    if results["Skill Score"] < 60:
+
+        weaknesses.append(
+            "Several required skills are missing."
+        )
+
+    if results["Experience Score"] < 60:
+
+        weaknesses.append(
+            "Experience is below the required level."
+        )
+
+    if results["Education Score"] < 60:
+
+        weaknesses.append(
+            "Education does not fully satisfy requirements."
+        )
+
+    if results["Project Score"] < 50:
+
+        weaknesses.append(
+            "Few relevant projects detected."
+        )
+
+    if results["Certification Score"] < 50:
+
+        weaknesses.append(
+            "Professional certifications are limited."
+        )
+
+    if results["Soft Skill Score"] < 50:
+
+        weaknesses.append(
+            "Limited evidence of soft skills."
+        )
+
+    ###########################################################
+    # Recommendation
+    ###########################################################
+
+    final_score = results["Final Score"]
+
+    if final_score >= 90:
+
+        recommendation = "Highly Recommended"
+
+    elif final_score >= 80:
+
+        recommendation = "Recommended"
+
+    elif final_score >= 70:
+
+        recommendation = "Recommended with Reservations"
+
+    elif final_score >= 60:
+
+        recommendation = "Average Candidate"
+
+    else:
+
+        recommendation = "Not Recommended"
+
+    ###########################################################
+    # Hiring Confidence
+    ###########################################################
+
+    if final_score >= 90:
+
+        confidence = "Very High"
+
+    elif final_score >= 80:
+
+        confidence = "High"
+
+    elif final_score >= 70:
+
+        confidence = "Moderate"
+
+    elif final_score >= 60:
+
+        confidence = "Low"
+
+    else:
+
+        confidence = "Very Low"
+
+    ###########################################################
+    # Resume Summary
+    ###########################################################
+
+    summary = f"""
+Candidate achieved an overall AI recruitment score of
+{final_score}%.
+
+The resume demonstrates
+{len(results["Matched Skills"])} matched skills,
+{results["Resume Experience"]} years of experience
+and an education score of
+{results["Education Score"]}%.
+"""
+
+    ###########################################################
+    # Return
+    ###########################################################
+
+    analysis = {
+
+        "Summary": summary,
+
+        "Strengths": strengths,
+
+        "Weaknesses": weaknesses,
+
+        "Recommendation": recommendation,
+
+        "Hiring Confidence": confidence,
+
+        "Matched Skills": results["Matched Skills"],
+
+        "Missing Skills": results["Missing Skills"],
+
+        "Detailed Scores": results
+
+    }
+
+    return analysis
+    ###############################################################
+# ATS RECRUITER DASHBOARD
+###############################################################
+
+st.title("🤖 Explainable AI Recruitment Decision Support System")
+
+st.markdown(
+"""
+Upload a candidate resume and job description.
+The system automatically evaluates the candidate using
+semantic AI matching and explainable scoring.
+"""
+)
+
+st.divider()
+
+###############################################################
+# FILE UPLOADS
+###############################################################
+
+resume_file = st.file_uploader(
+    "📄 Upload Resume (PDF)",
+    type=["pdf"],
+    key="resume"
+)
+
+jd_file = st.file_uploader(
+    "📄 Upload Job Description (PDF)",
+    type=["pdf"],
+    key="jd"
+)
+
+###############################################################
+# ANALYZE BUTTON
+###############################################################
+
+analyze_button = st.button(
+    "🚀 Analyze Candidate",
+    use_container_width=True
+)
+
+###############################################################
+# START ANALYSIS
+###############################################################
+
+if analyze_button:
+
+    if resume_file is None:
+
+        st.error("Please upload a Resume.")
+
+    elif jd_file is None:
+
+        st.error("Please upload a Job Description.")
+
+    else:
+
+        with st.spinner("Analyzing Resume..."):
+
+            ###################################################
+            # Extract PDF Text
+            ###################################################
+
+            resume_text = extract_text_from_pdf(
+                resume_file
+            )
+
+            jd_text = extract_text_from_pdf(
+                jd_file
+            )
+
+            ###################################################
+            # AI Analysis
+            ###################################################
+
+            analysis = generate_resume_analysis(
+
+                resume_text,
+
+                jd_text,
+
+                knowledge_base,
+
+                role_weights
+
+            )
+
+            scores = analysis["Detailed Scores"]
+
+            st.success("Analysis Completed Successfully")
+
+            st.divider()
+
+            ###################################################
+            # FINAL SCORE
+            ###################################################
+
+            st.metric(
+
+                label="Final AI Recruitment Score",
+
+                value=f'{scores["Final Score"]}%'
+
+            )
+
+            ###################################################
+            # SCORE CARDS
+            ###################################################
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+
+                st.metric(
+                    "Skill Score",
+                    f'{scores["Skill Score"]}%'
+                )
+
+                st.metric(
+                    "Experience Score",
+                    f'{scores["Experience Score"]}%'
+                )
+
+            with col2:
+
+                st.metric(
+                    "Education Score",
+                    f'{scores["Education Score"]}%'
+                )
+
+                st.metric(
+                    "Project Score",
+                    f'{scores["Project Score"]}%'
+                )
+
+            with col3:
+
+                st.metric(
+                    "Certification Score",
+                    f'{scores["Certification Score"]}%'
+                )
+
+                st.metric(
+                    "Soft Skill Score",
+                    f'{scores["Soft Skill Score"]}%'
+                )
+
+            st.divider()
+
+            ###################################################
+            # RECOMMENDATION
+            ###################################################
+
+            st.subheader("Recruitment Recommendation")
+
+            recommendation = analysis["Recommendation"]
+
+            if recommendation == "Highly Recommended":
+
+                st.success(recommendation)
+
+            elif recommendation == "Recommended":
+
+                st.success(recommendation)
+
+            elif recommendation == "Recommended with Reservations":
+
+                st.warning(recommendation)
+
+            elif recommendation == "Average Candidate":
+
+                st.warning(recommendation)
+
+            else:
+
+                st.error(recommendation)
+
+            ###################################################
+            # HIRING CONFIDENCE
+            ###################################################
+
+            st.info(
+                f'Hiring Confidence : {analysis["Hiring Confidence"]}'
+            )
+
+            st.divider()
+
+            ###################################################
+            # SUMMARY
+            ###################################################
+
+            st.subheader("Candidate Summary")
+
+            st.write(
+                analysis["Summary"]
+            )
+
+            ###################################################
+            # STRENGTHS
+            ###################################################
+
+            st.subheader("Candidate Strengths")
+
+            for strength in analysis["Strengths"]:
+
+                st.success(strength)
+
+            ###################################################
+            # WEAKNESSES
+            ###################################################
+
+            st.subheader("Candidate Weaknesses")
+
+            for weakness in analysis["Weaknesses"]:
+
+                st.warning(weakness)
+
+            ###################################################
+            # MATCHED SKILLS
+            ###################################################
+
+            st.subheader("Matched Skills")
+
+            st.write(
+                analysis["Matched Skills"]
+            )
+
+            ###################################################
+            # MISSING SKILLS
+            ###################################################
+
+            st.subheader("Missing Skills")
+
+            st.write(
+                analysis["Missing Skills"]
+            )
+            ###############################################################
+# IMPORTS
+###############################################################
+
+import plotly.graph_objects as go
+import pandas as pd
+
+###############################################################
+# DASHBOARD VISUALIZATION
+###############################################################
+
+def display_dashboard(scores):
+
+    ###########################################################
+    # Circular Gauge
+    ###########################################################
+
+    fig = go.Figure(
+
+        go.Indicator(
+
+            mode="gauge+number",
+
+            value=scores["Final Score"],
+
+            title={
+
+                "text":"Final AI Score"
+
+            },
+
+            gauge={
+
+                "axis":{"range":[0,100]},
+
+                "bar":{"color":"green"},
+
+                "steps":[
+
+                    {
+                        "range":[0,50],
+                        "color":"#ffcccc"
+                    },
+
+                    {
+                        "range":[50,70],
+                        "color":"#ffe699"
+                    },
+
+                    {
+                        "range":[70,85],
+                        "color":"#b6d7a8"
+                    },
+
+                    {
+                        "range":[85,100],
+                        "color":"#6aa84f"
+                    }
+
+                ]
+
+            }
+
+        )
+
+    )
+
+    fig.update_layout(
+
+        height=350
+
+    )
+
+    st.plotly_chart(
+
+        fig,
+
+        use_container_width=True
+
+    )
+
+    ###########################################################
+    # Radar Chart
+    ###########################################################
+
+    radar_labels = [
+
+        "Skill",
+
+        "Experience",
+
+        "Education",
+
+        "Projects",
+
+        "Certification",
+
+        "Soft Skills"
+
+    ]
+
+    radar_values = [
+
+        scores["Skill Score"],
+
+        scores["Experience Score"],
+
+        scores["Education Score"],
+
+        scores["Project Score"],
+
+        scores["Certification Score"],
+
+        scores["Soft Skill Score"]
+
+    ]
+
+    radar = go.Figure()
+
+    radar.add_trace(
+
+        go.Scatterpolar(
+
+            r=radar_values,
+
+            theta=radar_labels,
+
+            fill="toself",
+
+            name="Candidate"
+
+        )
+
+    )
+
+    radar.update_layout(
+
+        polar={
+
+            "radialaxis":{
+
+                "visible":True,
+
+                "range":[0,100]
+
+            }
+
+        },
+
+        height=500
+
+    )
+
+    st.plotly_chart(
+
+        radar,
+
+        use_container_width=True
+
+    )
+
+    ###########################################################
+    # Score Table
+    ###########################################################
+
+    score_table = pd.DataFrame({
+
+        "Criterion":[
+
+            "Skill",
+
+            "Experience",
+
+            "Education",
+
+            "Projects",
+
+            "Certification",
+
+            "Soft Skills",
+
+            "Semantic"
+
+        ],
+
+        "Score":[
+
+            scores["Skill Score"],
+
+            scores["Experience Score"],
+
+            scores["Education Score"],
+
+            scores["Project Score"],
+
+            scores["Certification Score"],
+
+            scores["Soft Skill Score"],
+
+            scores["Semantic Score"]
+
+        ]
+
+    })
+
+    st.dataframe(
+
+        score_table,
+
+        use_container_width=True
+
+    )
+
+    ###########################################################
+    # Horizontal Bar Chart
+    ###########################################################
+
+    bar = go.Figure()
+
+    bar.add_trace(
+
+        go.Bar(
+
+            x=score_table["Score"],
+
+            y=score_table["Criterion"],
+
+            orientation="h",
+
+            text=score_table["Score"],
+
+            textposition="outside"
+
+        )
+
+    )
+
+    bar.update_layout(
+
+        xaxis=dict(
+
+            range=[0,100]
+
+        ),
+
+        height=500
+
+    )
+
+    st.plotly_chart(
+
+        bar,
+
+        use_container_width=True
+
+    )
+    ###############################################################
+# MULTIPLE RESUME UPLOAD
+###############################################################
+
+resume_files = st.file_uploader(
 
     "Upload Candidate Resumes",
 
@@ -332,491 +1202,195 @@ uploaded_resumes = st.file_uploader(
 
 )
 
+jd_file = st.file_uploader(
 
-if st.button("Analyze Candidates"):
+    "Upload Job Description",
 
-    if uploaded_resumes:
+    type=["pdf"]
 
-        results = []
+)
+###############################################################
+# FEATURE CONTRIBUTION
+###############################################################
 
-        for resume in uploaded_resumes:
+def calculate_feature_contributions(scores, role_weights):
 
-            resume_text = extract_resume_text(resume)
+    contributions = {
 
-            candidate_name = resume.name.replace(
-
-                ".pdf",
-
-                ""
-
-            )
-
-            skills = extract_skills(
-
-                resume_text
-
-            )
-
-            skill_score, matched, missing = calculate_skill_score(
-
-                skills
-
-            )
-
-            ai_score = calculate_ai_similarity(
-
-                resume_text,
-
-                jd_text
-
-            )
-
-            experience_score = calculate_experience_score(
-
-                resume_text
-
-            )
-
-            education_score = calculate_education_score(
-
-                resume_text
-
-            )
-
-            final_score = calculate_final_score(
-
-                skill_score,
-
-                experience_score,
-
-                education_score
-
-            )
-
-            results.append(
-
-                {
-
-                    "Candidate Name": candidate_name,
-
-                    "Skill Score": skill_score,
-
-                    "Experience Score": experience_score,
-
-                    "Education Score": education_score,
-
-                    "AI Match Score": ai_score,
-
-                    "Final Score": final_score,
-
-                    "Matched Skills": matched,
-
-                    "Missing Skills": missing
-
-                }
-
-            )
-
-        result_df = pd.DataFrame(results)
-
-        result_df = result_df.sort_values(
-
-            by="Final Score",
-
-            ascending=False
-
-        )
-
-        st.session_state["result_df"] = result_df
-
-    else:
-
-        st.warning(
-
-            "Please upload resumes"
-
-        )
-
-
-
-# ==========================
-# LOAD RESULTS
-# ==========================
-
-
-if "result_df" in st.session_state:
-
-
-    result_df = st.session_state["result_df"]
-
-
-
-    # ==========================
-    # RANKING TABLE
-    # ==========================
-
-
-    st.subheader(
-
-        "AI-RDSS Candidate Ranking"
-
-    )
-
-
-    ranking_df = result_df.copy()
-
-
-    st.dataframe(
-
-        ranking_df.drop(
-
-            columns=[
-
-                "Matched Skills",
-
-                "Missing Skills"
-
-            ]
-
+        "Semantic Matching": round(
+            scores["Semantic Score"] *
+            role_weights["semantic"], 2
         ),
 
-        use_container_width=True
-
-    )
-
-
-
-    # ==========================
-    # DECISION
-    # ==========================
-
-
-    st.subheader(
-
-        "Final Recruitment Decision"
-
-    )
-
-
-    def get_decision(score):
-
-        if score >= 70:
-
-            return "Recommended"
-
-        elif score >= 50:
-
-            return "Consider"
-
-        else:
-
-            return "Not Recommended"
-
-
-
-    decision_df = result_df.copy()
-
-
-    decision_df["Decision"] = decision_df[
-
-        "Final Score"
-
-    ].apply(
-
-        get_decision
-
-    )
-
-
-    st.dataframe(
-
-        decision_df[
-
-            [
-
-                "Candidate Name",
-
-                "Final Score",
-
-                "Decision"
-
-            ]
-
-        ],
-
-        use_container_width=True
-
-    )
-
-
-
-    # ==========================
-    # CANDIDATE PROFILE
-    # ==========================
-
-
-    st.subheader(
-
-        "Candidate Detailed Analysis"
-
-    )
-
-
-    selected_candidate_name = st.selectbox(
-
-        "Select Candidate",
-
-        result_df["Candidate Name"].tolist(),
-
-        key="profile_candidate"
-
-    )
-
-
-    candidate = result_df[
-
-        result_df["Candidate Name"] == selected_candidate_name
-
-    ].iloc[0]
-
-
-
-    col1, col2, col3, col4 = st.columns(4)
-
-
-    col1.metric(
-
-        "Skill Score",
-
-        candidate["Skill Score"]
-
-    )
-
-
-    col2.metric(
-
-        "Experience Score",
-
-        candidate["Experience Score"]
-
-    )
-
-
-    col3.metric(
-
-        "Education Score",
-
-        candidate["Education Score"]
-
-    )
-
-
-    col4.metric(
-
-        "Final Score",
-
-        candidate["Final Score"]
-
-    )
-    # ==========================
-    # SKILL ANALYSIS
-    # ==========================
-
-
-    st.subheader(
-
-        "Matched Skills"
-
-    )
-
-
-    for skill in candidate["Matched Skills"]:
-
-        st.success(
-
-            "✓ " + skill
-
+        "Skill Matching": round(
+            scores["Skill Score"] *
+            role_weights["skills"], 2
+        ),
+
+        "Experience": round(
+            scores["Experience Score"] *
+            role_weights["experience"], 2
+        ),
+
+        "Education": round(
+            scores["Education Score"] *
+            role_weights["education"], 2
+        ),
+
+        "Projects": round(
+            scores["Project Score"] *
+            role_weights["projects"], 2
+        ),
+
+        "Certifications": round(
+            scores["Certification Score"] *
+            role_weights["certifications"], 2
+        ),
+
+        "Soft Skills": round(
+            scores["Soft Skill Score"] *
+            role_weights["soft_skills"], 2
         )
 
+    }
 
+    return contributions
+    ###############################################################
+# FEATURE CONTRIBUTION
+###############################################################
 
-    st.subheader(
+def calculate_feature_contributions(scores, role_weights):
 
-        "Missing Skills"
+    contributions = {
 
-    )
+        "Semantic Matching": round(
+            scores["Semantic Score"] *
+            role_weights["semantic"], 2
+        ),
 
+        "Skill Matching": round(
+            scores["Skill Score"] *
+            role_weights["skills"], 2
+        ),
 
-    for skill in candidate["Missing Skills"]:
+        "Experience": round(
+            scores["Experience Score"] *
+            role_weights["experience"], 2
+        ),
 
-        st.error(
+        "Education": round(
+            scores["Education Score"] *
+            role_weights["education"], 2
+        ),
 
-            "✗ " + skill
+        "Projects": round(
+            scores["Project Score"] *
+            role_weights["projects"], 2
+        ),
 
+        "Certifications": round(
+            scores["Certification Score"] *
+            role_weights["certifications"], 2
+        ),
+
+        "Soft Skills": round(
+            scores["Soft Skill Score"] *
+            role_weights["soft_skills"], 2
         )
 
+    }
 
+    return contributions
+    ###############################################################
+# DISPLAY XAI TABLE
+###############################################################
 
-    # ==========================
-    # SHAP STYLE EXPLANATION
-    # ==========================
+st.subheader("Explainable AI Report")
 
+xai = generate_explanation(
 
-    st.subheader(
+    scores,
 
-        "AI Decision Explanation"
+    role_weights
 
-    )
+)
 
+xai_df = pd.DataFrame(
 
-    contribution_df = pd.DataFrame(
+    xai
 
-        {
+)
 
-            "Feature": [
+st.dataframe(
 
-                "Skills",
+    xai_df,
 
-                "Experience",
+    use_container_width=True
+)
+###############################################################
+# FEATURE CONTRIBUTION CHART
+###############################################################
 
-                "Education"
+fig = go.Figure()
 
-            ],
+fig.add_trace(
 
+    go.Bar(
 
-            "Contribution": [
+        x=xai_df["Contribution"],
 
-                candidate["Skill Score"] * weights["Skills"] / 100,
+        y=xai_df["Feature"],
 
-                candidate["Experience Score"] * weights["Experience"] / 100,
+        orientation="h",
 
-                candidate["Education Score"] * weights["Education"] / 100
+        text=xai_df["Contribution"],
 
-            ]
-
-        }
-
-    )
-
-
-
-    st.dataframe(
-
-        contribution_df,
-
-        use_container_width=True
+        textposition="outside"
 
     )
 
+)
 
-    st.bar_chart(
+fig.update_layout(
 
-        contribution_df.set_index(
+    title="Feature Contribution to Final AI Score",
 
-            "Feature"
+    xaxis_title="Contribution",
 
-        )
+    yaxis_title="Feature",
 
-    )
+    height=500
 
+)
 
+st.plotly_chart(
 
-    # ==========================
-    # CANDIDATE COMPARISON
-    # ==========================
+    fig,
 
+    use_container_width=True
+)
+###############################################################
+# NATURAL LANGUAGE EXPLANATION
+###############################################################
 
-    if len(result_df) > 1:
+st.subheader("AI Decision Explanation")
 
+top_feature = max(
+    xai,
+    key=lambda x: x["Contribution"]
+)
 
-        st.subheader(
+lowest_feature = min(
+    xai,
+    key=lambda x: x["Contribution"]
+)
 
-            "Candidate Comparison"
+st.info(f"""
+The candidate achieved a Final AI Score of **{scores['Final Score']}%**.
 
-        )
+The strongest factor influencing the decision was **{top_feature['Feature']}**, contributing **{top_feature['Contribution']}** points.
 
+The weakest area was **{lowest_feature['Feature']}**, contributing only **{lowest_feature['Contribution']}** points.
 
-        comparison = result_df[
-
-            [
-
-                "Candidate Name",
-
-                "Skill Score",
-
-                "Experience Score",
-
-                "Education Score",
-
-                "Final Score"
-
-            ]
-
-        ]
-
-
-        st.dataframe(
-
-            comparison,
-
-            use_container_width=True
-
-        )
-
-
-        st.bar_chart(
-
-            comparison.set_index(
-
-                "Candidate Name"
-
-            )
-
-        )
-
-
-
-    # ==========================
-    # DOWNLOAD REPORT
-    # ==========================
-
-
-    st.subheader(
-
-        "Download Recruitment Report"
-
-    )
-
-
-    report_df = result_df.copy()
-
-
-    report_df["Decision"] = report_df[
-
-        "Final Score"
-
-    ].apply(
-
-        get_decision
-
-    )
-
-
-    csv_file = report_df.to_csv(
-
-        index=False
-
-    )
-
-
-    st.download_button(
-
-        label="Download CSV Report",
-
-        data=csv_file,
-
-        file_name="AI_RDSS_Candidate_Report.csv",
-
-        mime="text/csv"
-
-    )
+Improving the weakest area would likely increase the candidate's overall suitability for this role.
+""")
