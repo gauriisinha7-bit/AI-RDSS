@@ -256,3 +256,264 @@ def calculate_ai_similarity(
         2
 
     )
+
+# ============================================
+# SKILL SCORE
+# ============================================
+
+def calculate_skill_score(candidate_skills):
+
+    required = job_data["required_skills"]
+
+    matched = []
+
+    missing = []
+
+    for skill in required:
+
+        if skill in candidate_skills:
+
+            matched.append(skill)
+
+        else:
+
+            missing.append(skill)
+
+    if len(required) == 0:
+
+        score = 0
+
+    else:
+
+        score = (
+
+            len(matched) /
+
+            len(required)
+
+        ) * 100
+
+    return round(score,2), matched, missing
+
+
+# ============================================
+# EXPERIENCE SCORE
+# ============================================
+
+def calculate_experience_score(text):
+
+    matches = re.findall(
+
+        r'(\d+)\+?\s*(?:years|year|yrs)',
+
+        text.lower()
+
+    )
+
+    if matches:
+
+        years = max(
+
+            [int(x) for x in matches]
+
+        )
+
+    else:
+
+        years = 0
+
+    required = job_data["minimum_experience"]
+
+    if years >= required:
+
+        return 100
+
+    elif years == 0:
+
+        return 0
+
+    else:
+
+        return round(
+
+            (years/required)*100,
+
+            2
+
+        )
+
+
+# ============================================
+# EDUCATION SCORE
+# ============================================
+
+def calculate_education_score(text):
+
+    text = text.lower()
+
+    for edu in job_data["education"]:
+
+        if edu.lower() in text:
+
+            return 100
+
+    if "bachelor" in text:
+
+        return 80
+
+    return 0
+
+
+# ============================================
+# CERTIFICATION SCORE
+# ============================================
+
+CERTIFICATIONS = [
+
+    "aws",
+
+    "azure",
+
+    "oracle",
+
+    "google",
+
+    "coursera",
+
+    "udemy",
+
+    "ibm",
+
+    "microsoft"
+
+]
+
+
+def calculate_certification_score(text):
+
+    text = text.lower()
+
+    score = 0
+
+    for cert in CERTIFICATIONS:
+
+        if cert in text:
+
+            score += 15
+
+    return min(score,100)
+
+
+# ============================================
+# PROJECT SCORE
+# ============================================
+
+PROJECT_KEYWORDS = [
+
+    "project",
+
+    "developed",
+
+    "implemented",
+
+    "github",
+
+    "designed",
+
+    "built"
+
+]
+
+
+def calculate_project_score(text):
+
+    text = text.lower()
+
+    score = 0
+
+    for word in PROJECT_KEYWORDS:
+
+        if word in text:
+
+            score += 20
+
+    return min(score,100)
+
+
+# ============================================
+# SOFT SKILL SCORE
+# ============================================
+
+SOFT_SKILLS = [
+
+    "leadership",
+
+    "communication",
+
+    "teamwork",
+
+    "problem solving",
+
+    "critical thinking",
+
+    "adaptability"
+
+]
+
+
+def calculate_softskill_score(text):
+
+    text = text.lower()
+
+    score = 0
+
+    for word in SOFT_SKILLS:
+
+        if word in text:
+
+            score += 15
+
+    return min(score,100)
+
+
+# ============================================
+# FINAL SCORE
+# ============================================
+
+def calculate_final_score(
+
+        skill,
+
+        experience,
+
+        education,
+
+        ai,
+
+        certification,
+
+        project,
+
+        softskills
+
+):
+
+    final = (
+
+        skill * 0.30 +
+
+        experience * 0.15 +
+
+        education * 0.10 +
+
+        ai * 0.20 +
+
+        certification * 0.10 +
+
+        project * 0.10 +
+
+        softskills * 0.05
+
+    )
+
+    return round(final,2)
