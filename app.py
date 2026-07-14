@@ -154,12 +154,9 @@ def calculate_skill_score(candidate_skills):
 
     required = job_data["required_skills"]
 
-
     matched = []
 
-
     missing = []
-
 
     for skill in required:
 
@@ -171,22 +168,15 @@ def calculate_skill_score(candidate_skills):
 
             missing.append(skill)
 
-
     if len(required) == 0:
 
         score = 0
 
     else:
 
-        score = (
+        score = (len(matched) / len(required)) * 100
 
-            len(matched) / len(required)
-
-        ) * 100
-
-
-
-    return round(score,2), matched, missing
+    return round(score, 2), matched, missing
 
 
 
