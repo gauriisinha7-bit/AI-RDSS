@@ -448,92 +448,68 @@ if 'result_df' in locals():
 
 
 
-    st.subheader(
+  st.subheader("AI-RDSS Feature Contribution Explanation")
 
-        "AI-RDSS Feature Contribution Explanation"
-
-    )
-
-
-    selected_candidate = result_df.iloc[0]
-
-
-    features = [
-
-        "Skills",
-
-        "Experience",
-
-        "Education"
-
-    ]
 
 if 'result_df' in locals():
 
     selected_candidate = result_df.iloc[0]
 
 
-    features = [
-
-        "Skills",
-        "Experience",
-        "Education"
-
-    ]
-
-
-    contributions = [
-
-        selected_candidate["Skill Score"] * weights["Skills"]/100,
-        selected_candidate["Experience Score"] * weights["Experience"]/100,
-        selected_candidate["Education Score"] * weights["Education"]/100
-
-    ]
-
-
     contribution_df = pd.DataFrame(
 
         {
-            "Feature": features,
-            "Contribution": contributions
+
+            "Feature": [
+
+                "Skills",
+
+                "Experience",
+
+                "Education"
+
+            ],
+
+            "Contribution": [
+
+                selected_candidate["Skill Score"] * weights["Skills"] / 100,
+
+                selected_candidate["Experience Score"] * weights["Experience"] / 100,
+
+                selected_candidate["Education Score"] * weights["Education"] / 100
+
+            ]
+
         }
 
     )
 
-  
-st.write(
-    pd.DataFrame(
-        {
-            "Feature": features,
-            "Contribution": contributions
-        }
-    )
-)
 
+    st.dataframe(
 
+        contribution_df,
 
-st.subheader(
-
-        "Download Report"
+        use_container_width=True
 
     )
 
 
-csv = result_df.to_csv(
-
-        index=False
-
-    )
+st.subheader("Download Recruitment Report")
 
 
-st.download_button(
+if 'result_df' in locals():
 
-        "Download CSV",
+    csv_file = result_df.to_csv(index=False)
 
-        csv,
 
-        "AI_RDSS_Report.csv",
+    st.download_button(
 
-        "text/csv"
+        label="Download CSV Report",
+
+        data=csv_file,
+
+        file_name="AI_RDSS_Report.csv",
+
+        mime="text/csv"
 
     )
