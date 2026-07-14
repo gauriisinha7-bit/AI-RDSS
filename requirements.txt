@@ -5,4 +5,4 @@ scikit-learn
 sentence-transformers
 shap
 python-docx
-pymupdf
+PyMuPDF
