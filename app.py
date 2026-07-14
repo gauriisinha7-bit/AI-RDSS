@@ -271,3 +271,315 @@ def calculate_final_score(
 
     return round(score,2)
     
+# ==========================
+# RESUME ANALYSIS
+# ==========================
+
+
+uploaded_resumes = st.file_uploader(
+
+    "Upload Candidate Resumes",
+
+    type=["pdf"],
+
+    accept_multiple_files=True
+
+)
+
+
+
+if st.button("Analyze Candidates"):
+
+
+    if uploaded_resumes:
+
+
+        results = []
+
+
+        for resume in uploaded_resumes:
+
+
+            resume_text = extract_resume_text(resume)
+
+
+            candidate_name = resume.name.replace(
+
+                ".pdf",
+
+                ""
+
+            )
+
+
+            skills = extract_skills(
+
+                resume_text
+
+            )
+
+
+            skill_score, matched, missing = calculate_skill_score(
+
+                skills
+
+            )
+
+
+            experience_score = calculate_experience_score(
+
+                resume_text
+
+            )
+
+
+            education_score = calculate_education_score(
+
+                resume_text
+
+            )
+
+
+            final_score = calculate_final_score(
+
+                skill_score,
+
+                experience_score,
+
+                education_score
+
+            )
+
+
+
+            results.append(
+
+                {
+
+                    "Candidate Name": candidate_name,
+
+                    "Skill Score": skill_score,
+
+                    "Experience Score": experience_score,
+
+                    "Education Score": education_score,
+
+                    "Final Score": final_score,
+
+                    "Matched Skills": matched,
+
+                    "Missing Skills": missing
+
+                }
+
+            )
+
+
+
+        result_df = pd.DataFrame(results)
+
+
+
+        result_df = result_df.sort_values(
+
+            by="Final Score",
+
+            ascending=False
+
+        )
+
+
+        st.session_state["result_df"] = result_df
+
+
+
+    else:
+
+
+        st.warning(
+
+            "Please upload resumes"
+
+        )
+
+
+
+# ==========================
+# LOAD RESULTS
+# ==========================
+
+
+if "result_df" in st.session_state:
+
+
+    result_df = st.session_state["result_df"]
+
+
+
+    # ==========================
+    # RANKING TABLE
+    # ==========================
+
+
+    st.subheader(
+
+        "AI-RDSS Candidate Ranking"
+
+    )
+
+
+    ranking_df = result_df.copy()
+
+
+    st.dataframe(
+
+        ranking_df.drop(
+
+            columns=[
+
+                "Matched Skills",
+
+                "Missing Skills"
+
+            ]
+
+        ),
+
+        use_container_width=True
+
+    )
+
+
+
+    # ==========================
+    # DECISION
+    # ==========================
+
+
+    st.subheader(
+
+        "Final Recruitment Decision"
+
+    )
+
+
+    def get_decision(score):
+
+        if score >= 70:
+
+            return "Recommended"
+
+        elif score >= 50:
+
+            return "Consider"
+
+        else:
+
+            return "Not Recommended"
+
+
+
+    decision_df = result_df.copy()
+
+
+    decision_df["Decision"] = decision_df[
+
+        "Final Score"
+
+    ].apply(
+
+        get_decision
+
+    )
+
+
+    st.dataframe(
+
+        decision_df[
+
+            [
+
+                "Candidate Name",
+
+                "Final Score",
+
+                "Decision"
+
+            ]
+
+        ],
+
+        use_container_width=True
+
+    )
+
+
+
+    # ==========================
+    # CANDIDATE PROFILE
+    # ==========================
+
+
+    st.subheader(
+
+        "Candidate Detailed Analysis"
+
+    )
+
+
+    selected_candidate_name = st.selectbox(
+
+        "Select Candidate",
+
+        result_df["Candidate Name"].tolist(),
+
+        key="profile_candidate"
+
+    )
+
+
+    candidate = result_df[
+
+        result_df["Candidate Name"] == selected_candidate_name
+
+    ].iloc[0]
+
+
+
+    col1, col2, col3, col4 = st.columns(4)
+
+
+    col1.metric(
+
+        "Skill Score",
+
+        candidate["Skill Score"]
+
+    )
+
+
+    col2.metric(
+
+        "Experience Score",
+
+        candidate["Experience Score"]
+
+    )
+
+
+    col3.metric(
+
+        "Education Score",
+
+        candidate["Education Score"]
+
+    )
+
+
+    col4.metric(
+
+        "Final Score",
+
+        candidate["Final Score"]
+
+    )
