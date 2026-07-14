@@ -1,4 +1,8 @@
 import streamlit as st
+import pandas as pd
+import json
+import fitz
+import re
 
 
 st.set_page_config(
@@ -7,39 +11,73 @@ st.set_page_config(
 )
 
 
-st.title(
-    "AI-RDSS Candidate Recommendation System"
-)
+st.title("AI-RDSS Candidate Recommendation System")
 
 
-st.write(
-    "AI-based Resume Screening and Candidate Ranking System"
-)
+# Load knowledge base
+
+with open("recruitment_knowledge_base.json","r") as f:
+
+    job_database = json.load(f)
 
 
-resume_files = st.file_uploader(
-    "Upload Resume Files",
-    type=["pdf"],
-    accept_multiple_files=True
-)
+job_role = "Software Engineer"
+
+job_data = job_database[job_role]
 
 
-job_description = st.file_uploader(
-    "Upload Job Description",
-    type=["pdf"]
-)
+weights = job_data["weights"]
 
 
-if st.button("Analyze Candidates"):
 
-    if resume_files and job_description:
+# Resume text extraction
 
-        st.success(
-            "Files uploaded successfully"
-        )
+def extract_resume_text(file):
 
-    else:
+    text = ""
 
-        st.warning(
-            "Please upload resumes and job description"
-        )
+    pdf = fitz.open(stream=file.read(), filetype="pdf")
+
+
+    for page in pdf:
+
+        text += page.get_text()
+
+
+    return text
+
+
+
+# Basic skill extraction
+
+def extract_skills(text):
+
+    skills = [
+
+        "Python",
+        "SQL",
+        "Git",
+        "Data Structures",
+        "Algorithms",
+        "Docker",
+        "AWS",
+        "Linux",
+        "REST API"
+
+    ]
+
+
+    found = []
+
+
+    text = text.lower()
+
+
+    for skill in skills:
+
+        if skill.lower() in text:
+
+            found.append(skill)
+
+
+    return found
