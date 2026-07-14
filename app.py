@@ -162,7 +162,7 @@ def extract_jd_skills(jd_text):
 
 
 
-    def calculate_skill_score(candidate_skills):
+def calculate_skill_score(candidate_skills):
 
     required = job_data["required_skills"]
 
