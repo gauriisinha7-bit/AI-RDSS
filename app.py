@@ -392,7 +392,13 @@ if st.button("Analyze Candidates"):
 
             )
 
+ai_score = calculate_ai_similarity(
 
+    resume_text,
+
+    jd_text
+
+)
             final_score = calculate_final_score(
 
                 skill_score,
