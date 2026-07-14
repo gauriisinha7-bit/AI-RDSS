@@ -328,7 +328,6 @@ def calculate_ai_similarity(
 # RESUME ANALYSIS
 # ==========================
 
-
 uploaded_resumes = st.file_uploader(
 
     "Upload Candidate Resumes",
@@ -340,21 +339,15 @@ uploaded_resumes = st.file_uploader(
 )
 
 
-
 if st.button("Analyze Candidates"):
-
 
     if uploaded_resumes:
 
-
         results = []
-
 
         for resume in uploaded_resumes:
 
-
             resume_text = extract_resume_text(resume)
-
 
             candidate_name = resume.name.replace(
 
@@ -364,13 +357,11 @@ if st.button("Analyze Candidates"):
 
             )
 
-
             skills = extract_skills(
 
                 resume_text
 
             )
-
 
             skill_score, matched, missing = calculate_skill_score(
 
@@ -378,6 +369,13 @@ if st.button("Analyze Candidates"):
 
             )
 
+            ai_score = calculate_ai_similarity(
+
+                resume_text,
+
+                jd_text
+
+            )
 
             experience_score = calculate_experience_score(
 
@@ -385,21 +383,13 @@ if st.button("Analyze Candidates"):
 
             )
 
-
             education_score = calculate_education_score(
 
                 resume_text
 
             )
 
-ai_score = calculate_ai_similarity(
-
-    resume_text,
-
-    jd_text
-
-)
-        final_score = calculate_final_score(
+            final_score = calculate_final_score(
 
                 skill_score,
 
@@ -408,8 +398,6 @@ ai_score = calculate_ai_similarity(
                 education_score
 
             )
-
-
 
             results.append(
 
@@ -423,6 +411,8 @@ ai_score = calculate_ai_similarity(
 
                     "Education Score": education_score,
 
+                    "AI Match Score": ai_score,
+
                     "Final Score": final_score,
 
                     "Matched Skills": matched,
@@ -433,11 +423,7 @@ ai_score = calculate_ai_similarity(
 
             )
 
-
-
         result_df = pd.DataFrame(results)
-
-
 
         result_df = result_df.sort_values(
 
@@ -447,13 +433,9 @@ ai_score = calculate_ai_similarity(
 
         )
 
-
         st.session_state["result_df"] = result_df
 
-
-
     else:
-
 
         st.warning(
 
