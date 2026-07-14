@@ -538,3 +538,61 @@ if 'result_df' in locals():
 
 
     st.pyplot(fig)
+
+st.subheader("Candidate Comparison")
+
+
+if 'result_df' in locals() and len(result_df) > 1:
+
+
+    comparison = result_df[
+
+        [
+
+            "Candidate Name",
+
+            "Skill Score",
+
+            "Experience Score",
+
+            "Education Score",
+
+            "Final Score"
+
+        ]
+
+    ]
+
+
+    st.dataframe(
+
+        comparison,
+
+        use_container_width=True
+
+    )
+
+
+    st.bar_chart(
+
+        comparison.set_index(
+
+            "Candidate Name"
+
+        )[
+
+            [
+
+                "Skill Score",
+
+                "Experience Score",
+
+                "Education Score",
+
+                "Final Score"
+
+            ]
+
+        ]
+
+    )
