@@ -468,19 +468,6 @@ if 'result_df' in locals():
 
     selected_name = st.selectbox(
 
-        "Select Candidate for Explanation",
-
-        result_df["Candidate Name"].tolist()
-
-    )
-
-
-    selected_candidate = result_df[
-
-        result_df["Candidate Name"] == selected_name
-
-    ].iloc[0]
-
 
     contribution_df = pd.DataFrame(
 
