@@ -479,33 +479,14 @@ if 'result_df' in locals():
 
     ]
 
-
-    fig, ax = plt.subplots(
-
-        figsize=(8,4)
-
+st.write(
+    pd.DataFrame(
+        {
+            "Feature": features,
+            "Contribution": contributions
+        }
     )
-
-
-    ax.bar(
-
-        features,
-
-        contributions
-
-    )
-
-
-    ax.set_title(
-
-        "Decision Contribution - "
-
-        + selected_candidate["Candidate Name"]
-
-    )
-
-
-    st.pyplot(fig)
+)
 
 
 
