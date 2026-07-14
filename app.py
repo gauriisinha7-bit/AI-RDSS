@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import fitz
 import re
-
+from pathlib import Path
 
 st.set_page_config(
     page_title="AI-RDSS",
@@ -21,7 +21,14 @@ with open("recruitment_knowledge_base.json","r") as f:
     job_database = json.load(f)
 
 
-job_role = "Software Engineer"
+job_role = st.sidebar.selectbox(
+
+    "Select Job Role",
+
+    list(job_database.keys())
+
+)
+
 
 job_data = job_database[job_role]
 
