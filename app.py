@@ -467,4 +467,74 @@ if 'result_df' in locals():
 
         mime="text/csv"
 
+    
     )
+
+
+
+st.subheader("AI-RDSS Feature Contribution Explanation")
+
+
+if 'result_df' in locals():
+
+    selected_candidate = result_df.iloc[0]
+
+
+    features = [
+
+        "Skills",
+
+        "Experience",
+
+        "Education"
+
+    ]
+
+
+    contributions = [
+
+        selected_candidate["Skill Score"] * weights["Skills"] / 100,
+
+        selected_candidate["Experience Score"] * weights["Experience"] / 100,
+
+        selected_candidate["Education Score"] * weights["Education"] / 100
+
+    ]
+
+
+    fig, ax = plt.subplots(figsize=(8,4))
+
+
+    ax.bar(
+
+        features,
+
+        contributions
+
+    )
+
+
+    ax.set_xlabel(
+
+        "Features"
+
+    )
+
+
+    ax.set_ylabel(
+
+        "Contribution"
+
+    )
+
+
+    ax.set_title(
+
+        "AI Decision Explanation - "
+
+        + selected_candidate["Candidate Name"]
+
+    )
+
+
+    st.pyplot(fig)
