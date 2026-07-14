@@ -447,3 +447,24 @@ if 'result_df' in locals():
         use_container_width=True
 
     )
+
+
+st.subheader("Download Recruitment Report")
+
+
+if 'result_df' in locals():
+
+    csv_file = result_df.to_csv(index=False)
+
+
+    st.download_button(
+
+        label="Download CSV Report",
+
+        data=csv_file,
+
+        file_name="AI_RDSS_Candidate_Report.csv",
+
+        mime="text/csv"
+
+    )
