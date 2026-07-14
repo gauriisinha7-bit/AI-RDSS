@@ -3,7 +3,6 @@ import pandas as pd
 import json
 import fitz
 import re
-import matplotlib.pyplot as plt
 
 
 st.set_page_config(
