@@ -197,3 +197,138 @@ def calculate_final_score(
 
 
     return round(final,2)
+
+uploaded_resumes = st.file_uploader(
+
+    "Upload Candidate Resumes",
+
+    type=["pdf"],
+
+    accept_multiple_files=True
+
+)
+
+
+
+if st.button("Analyze Candidates"):
+
+
+    if uploaded_resumes:
+
+
+        results = []
+
+
+        for resume in uploaded_resumes:
+
+
+            resume_text = extract_resume_text(resume)
+
+
+            candidate_name = resume.name.replace(".pdf","")
+
+
+            skills = extract_skills(resume_text)
+
+
+            skill_score, matched = calculate_skill_score(skills)
+
+
+            exp_score = calculate_experience_score(
+
+                resume_text
+
+            )
+
+
+            edu_score = calculate_education_score(
+
+                resume_text
+
+            )
+
+
+            final_score = calculate_final_score(
+
+                skill_score,
+
+                exp_score,
+
+                edu_score
+
+            )
+
+
+            results.append({
+
+
+                "Candidate Name":
+
+                candidate_name,
+
+
+                "Skill Score":
+
+                skill_score,
+
+
+                "Experience Score":
+
+                exp_score,
+
+
+                "Education Score":
+
+                edu_score,
+
+
+                "Final Score":
+
+                final_score,
+
+
+                "Matched Skills":
+
+                ", ".join(matched)
+
+
+            })
+
+
+
+        result_df = pd.DataFrame(results)
+
+
+        result_df = result_df.sort_values(
+
+            by="Final Score",
+
+            ascending=False
+
+        )
+
+
+        st.subheader(
+
+            "AI-RDSS Candidate Ranking"
+
+        )
+
+
+        st.dataframe(
+
+            result_df,
+
+            use_container_width=True
+
+        )
+
+
+    else:
+
+
+        st.warning(
+
+            "Please upload resumes"
+
+        )
