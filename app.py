@@ -977,15 +977,7 @@ if "result_df" in st.session_state:
 
     result_df = st.session_state["result_df"]
 
-    selected_candidate = st.selectbox(
-        "Select Candidate",
-        result_df["Candidate Name"],
-        key="feedback_candidate"
-    )
-
-    candidate = result_df[
-        result_df["Candidate Name"] == selected_candidate
-    ].iloc[0]
+    
 
     # ============================================
     # RECRUITER EXPLANATION
