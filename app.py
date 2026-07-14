@@ -973,68 +973,66 @@ if "result_df" in st.session_state:
         result_df["Candidate Name"] == selected_candidate
 
     ].iloc[0]
-# ============================================
-# RECRUITER EXPLANATION
-# ============================================
+if "result_df" in st.session_state:
 
-st.divider()
+    result_df = st.session_state["result_df"]
 
-st.subheader("Recruiter Explanation")
-
-if candidate["Decision"] == "Recommended":
-
-    st.success(
-
-        "Candidate strongly matches the job requirements."
-
+    selected_candidate = st.selectbox(
+        "Select Candidate",
+        result_df["Candidate Name"],
+        key="feedback_candidate"
     )
 
-elif candidate["Decision"] == "Consider":
+    candidate = result_df[
+        result_df["Candidate Name"] == selected_candidate
+    ].iloc[0]
 
-    st.warning(
+    # ============================================
+    # RECRUITER EXPLANATION
+    # ============================================
 
-        "Candidate partially satisfies the requirements."
+    st.divider()
 
-    )
+    st.subheader("Recruiter Explanation")
 
-else:
+    if candidate["Decision"] == "Recommended":
 
-    st.error(
+        st.success("Candidate strongly matches the job requirements.")
 
-        "Candidate does not satisfy the minimum hiring criteria."
+    elif candidate["Decision"] == "Consider":
 
-    )
+        st.warning("Candidate partially satisfies the requirements.")
 
+    else:
 
-# ============================================
-# CANDIDATE FEEDBACK
-# ============================================
+        st.error("Candidate does not satisfy the minimum hiring criteria.")
 
-st.divider()
+    # ============================================
+    # CANDIDATE FEEDBACK
+    # ============================================
 
-st.subheader("Candidate Feedback")
+    st.divider()
 
-feedback = generate_candidate_feedback(candidate)
+    st.subheader("Candidate Feedback")
 
-for item in feedback:
+    feedback = generate_candidate_feedback(candidate)
 
-    st.info(item)
+    for item in feedback:
 
+        st.info(item)
 
-# ============================================
-# EMAIL READY FEEDBACK
-# ============================================
+    # ============================================
+    # EMAIL
+    # ============================================
 
-st.divider()
+    st.divider()
 
-st.subheader("Email Feedback")
+    st.subheader("Email Feedback")
 
-email = f"""
+    email = f"""
 Dear {candidate['Candidate Name']},
 
 Thank you for applying for the {job_role} position.
-
-Your application has been evaluated using the AI-RDSS Recruitment Decision Support System.
 
 Final Decision:
 {candidate['Decision']}
@@ -1048,100 +1046,58 @@ Matched Skills:
 Missing Skills:
 {", ".join(candidate['Missing Skills'])}
 
-We encourage you to continue improving your technical profile and apply again in the future.
-
-Best Regards,
-
+Regards,
 Recruitment Team
 """
 
-st.text_area(
-
-    "Email",
-
-    email,
-
-    height=280
-
-)
-
-
-# ============================================
-# CANDIDATE COMPARISON
-# ============================================
-
-st.divider()
-
-st.subheader("Candidate Comparison")
-
-comparison = result_df[
-
-    [
-
-        "Candidate Name",
-
-        "Skill Score",
-
-        "Experience Score",
-
-        "AI Match Score",
-
-        "Final Score"
-
-    ]
-
-]
-
-st.dataframe(
-
-    comparison,
-
-    use_container_width=True
-
-)
-
-st.bar_chart(
-
-    comparison.set_index(
-
-        "Candidate Name"
-
+    st.text_area(
+        "Email",
+        email,
+        height=250
     )
 
-)
+    # ============================================
+    # COMPARISON
+    # ============================================
 
+    st.divider()
 
-# ============================================
-# DOWNLOAD REPORT
-# ============================================
+    st.subheader("Candidate Comparison")
 
-csv = result_df.to_csv(
+    comparison = result_df[
+        [
+            "Candidate Name",
+            "Skill Score",
+            "Experience Score",
+            "AI Match Score",
+            "Final Score"
+        ]
+    ]
 
-    index=False
+    st.dataframe(
+        comparison,
+        use_container_width=True
+    )
 
-)
+    st.bar_chart(
+        comparison.set_index("Candidate Name")
+    )
 
-st.download_button(
+    # ============================================
+    # DOWNLOAD REPORT
+    # ============================================
 
-    "Download Recruitment Report",
+    csv = result_df.to_csv(index=False)
 
-    csv,
+    st.download_button(
+        "Download Recruitment Report",
+        csv,
+        "AI_RDSS_Report.csv",
+        "text/csv"
+    )
 
-    "AI_RDSS_Report.csv",
+    st.divider()
 
-    "text/csv"
-
-)
-
-
-# ============================================
-# FOOTER
-# ============================================
-
-st.divider()
-
-st.caption(
-
-    "AI-RDSS Candidate Recommendation System | Explainable AI Recruitment Platform"
-
-)
+    st.caption(
+        "AI-RDSS Candidate Recommendation System | Explainable AI Recruitment Platform"
+    )
