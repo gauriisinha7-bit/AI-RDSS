@@ -497,7 +497,7 @@ st.subheader(
     )
 
 
-    csv = result_df.to_csv(
+csv = result_df.to_csv(
 
         index=False
 
